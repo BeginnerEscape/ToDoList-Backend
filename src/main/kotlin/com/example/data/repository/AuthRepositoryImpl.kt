@@ -24,14 +24,14 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
             getGAuthToken(GAuthTokenRequest(oauthCode.code)).let { token ->
                 dbQuery {
                     Auths.insert {
-                        it[email] = gAuthUserModel.email
-                        it[password] = gAuthUserModel.password
-                        it[accessToken] = token.accessToken
-                        it[refreshToken] = token.refreshToken
-                        it[Auths.accessTokenExp] = accessTokenExp
-                        it[Auths.refreshTokenExp] = refreshTokenExp
-                        it[grade] = "3" // 임시 더미 데이터
-                        it[className] = "2" // 임시 더미 데이터
+                        it[this.email] = gAuthUserModel.email
+                        it[this.password] = gAuthUserModel.password
+                        it[this.accessToken] = token.accessToken
+                        it[this.refreshToken] = token.refreshToken
+                        it[this.accessTokenExp] = accessTokenExp
+                        it[this.refreshTokenExp] = refreshTokenExp
+                        it[this.grade] = "3" // 임시 더미 데이터
+                        it[this.className] = "2" // 임시 더미 데이터
                     }
                 }
 
@@ -53,10 +53,10 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
         reissueGAuthToken(refreshToken).let { tokens ->
             dbQuery {
                 Auths.update({ Auths.refreshToken eq refreshToken }) {
-                    it[accessToken] = tokens.accessToken
+                    it[this.accessToken] = tokens.accessToken
                     it[this.refreshToken] = tokens.refreshToken
-                    it[Auths.accessTokenExp] = accessTokenExp
-                    it[Auths.refreshTokenExp] = refreshTokenExp
+                    it[this.accessTokenExp] = accessTokenExp
+                    it[this.refreshTokenExp] = refreshTokenExp
                 }
             }
 
@@ -80,8 +80,8 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
 
             dbQuery {
                 Auths.insert {
-                    it[Auths.grade] = grade
-                    it[Auths.className] = className
+                    it[this.grade] = grade
+                    it[this.className] = className
                 }
             }
 
