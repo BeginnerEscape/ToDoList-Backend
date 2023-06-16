@@ -1,9 +1,6 @@
 package com.example.data.repository
 
-import com.example.data.model.GAuthTokenRequest
-import com.example.data.model.GAuthTokenResponse
-import com.example.data.model.GAuthUser
-import com.example.data.model.GAuthUserInfo
+import com.example.data.model.*
 import com.example.domain.model.auth.*
 import com.example.server.DatabaseFactory.dbQuery
 import com.example.domain.repository.AuthRepository
@@ -23,14 +20,18 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
         val accessTokenExp = currentTime.plusMinutes(15).toString()
         val refreshTokenExp = currentTime.plusDays(7).toString()
 
-        getGAuthCode(gAuthUserModel.asGAuthUser()).let { code ->
-            getGAuthToken(GAuthTokenRequest(code)).let { token ->
+        getGAuthCode(gAuthUserModel.asGAuthUser()).let { oauthCode ->
+            getGAuthToken(GAuthTokenRequest(oauthCode.code)).let { token ->
                 dbQuery {
                     Auths.insert {
+                        it[email] = gAuthUserModel.email
+                        it[password] = gAuthUserModel.password
                         it[accessToken] = token.accessToken
                         it[refreshToken] = token.refreshToken
                         it[Auths.accessTokenExp] = accessTokenExp
                         it[Auths.refreshTokenExp] = refreshTokenExp
+                        it[grade] = "3" // 임시 더미 데이터
+                        it[className] = "2" // 임시 더미 데이터
                     }
                 }
 
@@ -91,26 +92,32 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
         }
     }
 
-    private suspend fun getGAuthCode(gAuthUser: GAuthUser): String = dbQuery {
-        client.post("https://server.gauth.co.kr/oauth/code") {
+    private suspend fun getGAuthCode(gAuthUser: GAuthUser): GAuthCode = dbQuery {
+        val response = client.post("https://server.gauth.co.kr/oauth/code") {
+            contentType(ContentType.Application.Json)
             setBody(gAuthUser)
-        }.body()
+        }.body<GAuthCode>()
+        println(response.code)
+        response
     }
 
     private suspend fun getGAuthToken(gAuthTokenRequest: GAuthTokenRequest): GAuthTokenResponse = dbQuery {
         client.post("https://server.gauth.co.kr/oauth/token") {
+            contentType(ContentType.Application.Json)
             setBody(gAuthTokenRequest)
         }.body()
     }
 
     private suspend fun reissueGAuthToken(refreshToken: String): GAuthTokenResponse = dbQuery {
         client.patch("https://server.gauth.co.kr/oauth/token") {
+            contentType(ContentType.Application.Json)
             headers { append("refreshToken", "Bearer $refreshToken") }
         }.body()
     }
 
     private suspend fun getGAuthUserInfo(accessToken: String): GAuthUserInfo = dbQuery {
         client.get("https://open.gauth.co.kr/user") {
+            contentType(ContentType.Application.Json)
             headers { append(HttpHeaders.Authorization, "Bearer $accessToken") }
         }.body()
     }
