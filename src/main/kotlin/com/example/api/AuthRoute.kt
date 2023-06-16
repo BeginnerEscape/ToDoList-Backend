@@ -32,7 +32,7 @@ fun Route.autoRoute() {
         }
 
         delete {
-            val accessToken = call.parameters["access_token"] ?: return@delete call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
+            val accessToken = call.request.headers["Authorization"] ?: return@delete call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
             logoutUseCase(accessToken)
             call.respondText("Logout correctly", status = HttpStatusCode.Accepted)
         }
