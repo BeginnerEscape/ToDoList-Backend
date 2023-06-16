@@ -26,7 +26,7 @@ fun Route.autoRoute() {
         }
 
         get {
-            val accessToken = call.parameters["access_token"] ?: return@get call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
+            val accessToken = call.request.headers["Authorization"] ?: return@get call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
             val userInfo = getUserInfoUseCase(accessToken)
             call.respond(userInfo)
         }

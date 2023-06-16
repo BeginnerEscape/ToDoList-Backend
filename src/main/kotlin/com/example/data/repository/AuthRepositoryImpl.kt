@@ -30,8 +30,8 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
                         it[this.refreshToken] = token.refreshToken
                         it[this.accessTokenExp] = accessTokenExp
                         it[this.refreshTokenExp] = refreshTokenExp
-                        it[this.grade] = "3" // 임시 더미 데이터
-                        it[this.className] = "2" // 임시 더미 데이터
+                        it[this.grade] = "0" // 임시 더미 데이터
+                        it[this.className] = "0" // 임시 더미 데이터
                     }
                 }
 
@@ -79,7 +79,7 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
             val className = user.classNum.toString()
 
             dbQuery {
-                Auths.insert {
+                Auths.update({ Auths.accessToken eq accessToken }) {
                     it[this.grade] = grade
                     it[this.className] = className
                 }
