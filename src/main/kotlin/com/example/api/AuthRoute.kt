@@ -38,7 +38,7 @@ fun Route.autoRoute() {
         }
 
         patch {
-            val refreshToken = call.parameters["refresh_token"] ?: return@patch call.respondText("Missing refreshToken", status = HttpStatusCode.BadRequest)
+            val refreshToken = call.request.headers["refreshToken"] ?: return@patch call.respondText("Missing refreshToken", status = HttpStatusCode.BadRequest)
             val tokenItem = reissueAccessTokenUseCase(refreshToken)
             call.respond(tokenItem)
         }
