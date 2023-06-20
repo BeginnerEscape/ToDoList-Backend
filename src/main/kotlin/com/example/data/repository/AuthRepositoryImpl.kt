@@ -8,9 +8,8 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import java.time.LocalDateTime
 
@@ -22,16 +21,22 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
 
         getGAuthCode(gAuthUserModel.asGAuthUser()).let { oauthCode ->
             getGAuthToken(GAuthTokenRequest(oauthCode.code)).let { token ->
+                val userInfo = getGAuthUserInfo(token.accessToken)
                 dbQuery {
-                    Auths.insert {
-                        it[this.email] = gAuthUserModel.email
-                        it[this.password] = gAuthUserModel.password
-                        it[this.accessToken] = token.accessToken
-                        it[this.refreshToken] = token.refreshToken
-                        it[this.accessTokenExp] = accessTokenExp
-                        it[this.refreshTokenExp] = refreshTokenExp
-                        it[this.grade] = "0" // 임시 더미 데이터
-                        it[this.className] = "0" // 임시 더미 데이터
+                    val email = Auths.select { Auths.email eq userInfo.email }.map { it[Auths.email] }.singleOrNull()
+
+                    if(email != null) {
+                        Auths.update({ Auths.email eq email}) {
+                            it[this.refreshToken] = token.refreshToken
+                        }
+                    } else {
+                        Auths.insert {
+                            it[this.refreshToken] = token.refreshToken
+                            it[this.email] = gAuthUserModel.email
+                            it[this.password] = gAuthUserModel.password
+                            it[this.grade] = userInfo.grade.toString()
+                            it[this.className] = userInfo.classNum.toString()
+                        }
                     }
                 }
 
@@ -51,15 +56,6 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
         val refreshTokenExp = currentTime.plusDays(7).toString()
 
         reissueGAuthToken(refreshToken).let { tokens ->
-            dbQuery {
-                Auths.update({ Auths.refreshToken eq refreshToken }) {
-                    it[this.accessToken] = tokens.accessToken
-                    it[this.refreshToken] = tokens.refreshToken
-                    it[this.accessTokenExp] = accessTokenExp
-                    it[this.refreshTokenExp] = refreshTokenExp
-                }
-            }
-
             return TokenItem(
                 accessToken = tokens.accessToken,
                 refreshToken = tokens.refreshToken,
@@ -70,20 +66,18 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
     }
 
     override suspend fun logout(accessToken: String) {
-        dbQuery { Auths.deleteWhere { this.accessToken eq accessToken } }
+        val email = getGAuthUserInfo(accessToken).email
+        dbQuery {
+            Auths.update({ Auths.email eq email }) {
+                it[refreshToken] = ""
+            }
+        }
     }
 
     override suspend fun getUserInfo(accessToken: String): UserItem {
         getGAuthUserInfo(accessToken).let { user ->
             val grade = user.grade.toString()
             val className = user.classNum.toString()
-
-            dbQuery {
-                Auths.update({ Auths.accessToken eq accessToken }) {
-                    it[this.grade] = grade
-                    it[this.className] = className
-                }
-            }
 
             return UserItem(
                 grade = grade,

@@ -13,10 +13,7 @@ data class AuthItem(
 
 object Auths: Table() {
     val userid = integer("user_id").autoIncrement()
-    val accessToken = varchar("access_token", 300) // 271
-    val refreshToken = varchar("refresh_token", 300) // 271
-    val accessTokenExp = varchar("access_token_exp", 30) // 27
-    val refreshTokenExp = varchar("refresh_token_exp", 30) // 27
+    val refreshToken = text("refresh_token")
     val grade = varchar("grade", 1)
     val className = varchar("class_name", 1)
     val email = varchar("email", 20)
