@@ -9,14 +9,12 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
-    fun init(config: ApplicationConfig) {
-        val driverClassName = "org.h2.Driver"
-        val jdbcURL = "jdbc:h2:~/todolist"
+    fun init() {
         val database = Database.connect(
-            url = jdbcURL,
-            driver = driverClassName,
-            user = "sa",
-            password = "sa"
+            url = System.getenv("DRIVER_CLASS_NAME"),
+            driver = System.getenv("JDBC_URL"),
+            user = System.getenv("USER"),
+            password = System.getenv("PASSWORD")
         )
 
         transaction(database) {
