@@ -86,6 +86,17 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
         }
     }
 
+    override suspend fun isTokenValid(accessToken: String): Boolean = dbQuery {
+        getGAuthUserInfo(accessToken).let { user ->
+            val refreshToken = Auths
+                .select { Auths.email eq user.email }
+                .map { it[Auths.refreshToken] }
+                .singleOrNull()
+
+            refreshToken != ""
+        }
+    }
+
     private suspend fun getGAuthCode(gAuthUser: GAuthUser): GAuthCode = dbQuery {
         val response = client.post("https://server.gauth.co.kr/oauth/code") {
             contentType(ContentType.Application.Json)

@@ -9,4 +9,5 @@ interface AuthRepository {
     suspend fun reissueAccessToken(refreshToken: String): TokenItem
     suspend fun logout(accessToken: String)
     suspend fun getUserInfo(accessToken: String): UserItem
+    suspend fun isTokenValid(accessToken: String): Boolean
 }
