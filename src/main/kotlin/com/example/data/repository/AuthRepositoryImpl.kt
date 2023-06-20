@@ -102,7 +102,6 @@ class AuthRepositoryImpl(private val client: HttpClient) : AuthRepository {
             contentType(ContentType.Application.Json)
             setBody(gAuthUser)
         }.body<GAuthCode>()
-        println(response.code)
         response
     }
 
