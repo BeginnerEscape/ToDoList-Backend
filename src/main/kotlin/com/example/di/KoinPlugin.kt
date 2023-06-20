@@ -5,6 +5,6 @@ import org.koin.ktor.plugin.Koin
 
 fun Application.installKoin() {
     install(Koin) {
-        modules(httpClientModule, usecaseModule)
+        modules(httpClientModule, usecaseModule, repositoryModule)
     }
 }

@@ -1,5 +1,6 @@
 package com.example.server
 
+import com.example.domain.model.auth.Auths
 import io.ktor.server.config.*
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
@@ -8,21 +9,16 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
-    fun init(config: ApplicationConfig) {
-        val driverClassName = config.property("storage.driverClassName").getString()
-        val jdbcURL = config.property("storage.jdbcURL").getString()
-        val user = config.property("storage.user").getString()
-        val password = config.property("storage.password").getString()
-
+    fun init() {
         val database = Database.connect(
-            url = jdbcURL,
-            driver = driverClassName,
-            user = user,
-            password = password
+            url = System.getenv("DRIVER_CLASS_NAME"),
+            driver = System.getenv("JDBC_URL"),
+            user = System.getenv("USER"),
+            password = System.getenv("PASSWORD")
         )
 
         transaction(database) {
-//            SchemaUtils.create()
+            SchemaUtils.create(Auths)
         }
     }
 
