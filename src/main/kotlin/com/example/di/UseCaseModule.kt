@@ -1,9 +1,6 @@
 package com.example.di
 
-import com.example.domain.usecase.auth.GAuthLoginUseCase
-import com.example.domain.usecase.auth.GetUserInfoUseCase
-import com.example.domain.usecase.auth.LogoutUseCase
-import com.example.domain.usecase.auth.ReissueAccessTokenUseCase
+import com.example.domain.usecase.auth.*
 import com.example.domain.usecase.todo.*
 import org.koin.dsl.module
 
@@ -13,6 +10,7 @@ val usecaseModule = module {
     single { GetUserInfoUseCase(get()) }
     single { LogoutUseCase(get()) }
     single { ReissueAccessTokenUseCase(get()) }
+    single { IsTokenValidUseCase(get()) }
 
     // todo
     single { DeleteToDoItemUseCase(get()) }
