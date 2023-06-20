@@ -1,10 +1,7 @@
 package com.example.api
 
 import com.example.domain.model.auth.GAuthUserModel
-import com.example.domain.usecase.auth.GAuthLoginUseCase
-import com.example.domain.usecase.auth.GetUserInfoUseCase
-import com.example.domain.usecase.auth.LogoutUseCase
-import com.example.domain.usecase.auth.ReissueAccessTokenUseCase
+import com.example.domain.usecase.auth.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -17,6 +14,7 @@ fun Route.autoRoute() {
     val getUserInfoUseCase: GetUserInfoUseCase by inject()
     val logoutUseCase: LogoutUseCase by inject()
     val reissueAccessTokenUseCase: ReissueAccessTokenUseCase by inject()
+    val isTokenValidUseCase: IsTokenValidUseCase by inject()
 
     route("/auth") {
         post {
@@ -26,19 +24,27 @@ fun Route.autoRoute() {
         }
 
         get {
-            val accessToken = call.request.headers["Authorization"] ?: return@get call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
-            val userInfo = getUserInfoUseCase(accessToken)
-            call.respond(userInfo)
+            val accessToken = call.request.headers["Authorization"] ?: return@get call.respondText("BadRequest AccessToken", status = HttpStatusCode.BadRequest)
+            if (isTokenValidUseCase(accessToken)) {
+                val userInfo = getUserInfoUseCase(accessToken)
+                call.respond(userInfo)
+            } else {
+                return@get call.respondText("Unauthorized AccessToken", status = HttpStatusCode.Unauthorized)
+            }
         }
 
         delete {
-            val accessToken = call.request.headers["Authorization"] ?: return@delete call.respondText("Missing accessToken", status = HttpStatusCode.BadRequest)
-            logoutUseCase(accessToken)
-            call.respondText("Logout correctly", status = HttpStatusCode.Accepted)
+            val accessToken = call.request.headers["Authorization"] ?: return@delete call.respondText("BadRequest AccessToken", status = HttpStatusCode.BadRequest)
+            if (isTokenValidUseCase(accessToken)) {
+                logoutUseCase(accessToken)
+                call.respondText("Logout correctly", status = HttpStatusCode.OK)
+            } else {
+                return@delete call.respondText("Unauthorized AccessToken", status = HttpStatusCode.Unauthorized)
+            }
         }
 
         patch {
-            val refreshToken = call.request.headers["refreshToken"] ?: return@patch call.respondText("Missing refreshToken", status = HttpStatusCode.BadRequest)
+            val refreshToken = call.request.headers["refreshToken"] ?: return@patch call.respondText("BadRequest RefreshToken", status = HttpStatusCode.BadRequest)
             val tokenItem = reissueAccessTokenUseCase(refreshToken)
             call.respond(tokenItem)
         }
