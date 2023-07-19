@@ -16,7 +16,7 @@ fun main() {
 }
 
 fun Application.module() {
-    DatabaseFactory.init(environment.config)
+    DatabaseFactory.init()
     configureSerialization()
     configureRouting()
     installKoin()
